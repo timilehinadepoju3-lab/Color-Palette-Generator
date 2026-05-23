@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Color Palette Generator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #f4f4f9;
+            padding: 2rem;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            color: #333;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        .primary-btn {
+            background-color: #222;
+            color: #fff;
+            border: none;
+            padding: 1rem 2rem;
+            font-size: 1.2rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s ease, transform 0.1s ease;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .primary-btn:hover {
+            background-color: #444;
+        }
+
+        .primary-btn:active {
+            transform: scale(0.98);
+        }
+
+        .palette-container {
+            display: flex;
+            flex-direction: row;
+            gap: 1rem;
+            width: 100%;
+            max-width: 1200px;
+            height: 60vh;
+        }
+
+        .color-box {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            position: relative;
+        }
+
+        .color-box:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0,0,0,0.15);
+        }
+
+        .hex-code {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #fff;
+            text-align: center;
+            text-transform: uppercase;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.3);
+            margin-bottom: 1rem;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .icon-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid #fff;
+            color: #fff;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.2s ease;
+            backdrop-filter: blur(4px);
+        }
+
+        .icon-btn:hover {
+            background: rgba(255, 255, 255, 0.4);
+        }
+
+        .icon-btn.locked {
+            background: rgba(0, 0, 0, 0.4);
+            border-color: #000;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .palette-container {
+                flex-direction: column;
+                height: auto;
+            }
+            
+            .color-box {
+                height: 150px;
+                justify-content: center;
+            }
+            
+            .hex-code {
+                margin-bottom: 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Color Palette Generator</h1>
+    </header>
+
+    <main>
+        <button id="generate-btn" class="primary-btn">Generate Palette</button>
+        
+        <div id="palette-container" class="palette-container">
+            </div>
+    </main>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    
+    <script>
+        const paletteContainer = document.getElementById('palette-container');
+        const generateBtn = document.getElementById('generate-btn');
+
+        // State to keep track of our 5 colors and their lock status
+        let colors = [
+            { hex: '', locked: false },
+            { hex: '', locked: false },
+            { hex: '', locked: false },
+            { hex: '', locked: false },
+            { hex: '', locked: false }
+        ];
+
+        // Helper function to generate a random HEX code
+        function generateRandomHex() {
+            const randomColor = Math.floor(Math.random() * 16777215).toString(16);
+            return `#${randomColor.padStart(6, '0').toUpperCase()}`;
+        }
+
+        // Function to render the UI based on the current state
+        function renderPalette() {
+            paletteContainer.innerHTML = ''; // Clear container
+
+            colors.forEach((colorObj, index) => {
+                // Create the box
+                const box = document.createElement('div');
+                box.className = 'color-box';
+                box.style.backgroundColor = colorObj.hex;
+
+                // Create the HEX display
+                const hexText = document.createElement('span');
+                hexText.className = 'hex-code';
+                hexText.innerText = colorObj.hex;
+
+                // Create controls container
+                const controls = document.createElement('div');
+                controls.className = 'controls';
+
+                // Copy Button
+                const copyBtn = document.createElement('button');
+                copyBtn.className = 'icon-btn';
+                copyBtn.innerText = 'Copy';
+                copyBtn.onclick = () => {
+                    navigator.clipboard.writeText(colorObj.hex);
+                    copyBtn.innerText = 'Copied!';
+                    setTimeout(() => copyBtn.innerText = 'Copy', 1500);
+                };
+
+                // Lock Button
+                const lockBtn = document.createElement('button');
+                lockBtn.className = `icon-btn ${colorObj.locked ? 'locked' : ''}`;
+                lockBtn.innerText = colorObj.locked ? 'Unlock' : 'Lock';
+                lockBtn.onclick = () => {
+                    colors[index].locked = !colors[index].locked;
+                    renderPalette(); // Re-render to update UI button state
+                };
+
+                // Append everything
+                controls.appendChild(copyBtn);
+                controls.appendChild(lockBtn);
+                box.appendChild(hexText);
+                box.appendChild(controls);
+                paletteContainer.appendChild(box);
+            });
+        }
+
+        // Function to generate new colors for unlocked boxes
+        function generateNewPalette() {
+            colors = colors.map(colorObj => {
+                if (colorObj.locked) return colorObj; // Keep it if locked
+                return { ...colorObj, hex: generateRandomHex() };
+            });
+            renderPalette();
+        }
+
+        // Initial setup
+        generateBtn.addEventListener('click', generateNewPalette);
+
+        // Generate the first palette on load
+        generateNewPalette();
+    </script>
+</body>
+</html>
